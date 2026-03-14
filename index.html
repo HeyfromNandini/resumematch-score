@@ -1,0 +1,733 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resume Analyzer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+        
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #1a202c;
+            margin-bottom: 0.5rem;
+        }
+        
+        .header p {
+            font-size: 1.125rem;
+            color: #4a5568;
+        }
+        
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+        
+        .input-section {
+            background: white;
+            border-radius: 12px;
+            padding: 2rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
+        }
+        
+        .input-section h2 {
+            font-size: 1.375rem;
+            font-weight: 600;
+            color: #1a202c;
+            margin-bottom: 1rem;
+        }
+        
+        .input-section label {
+            display: block;
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: #4a5568;
+            margin-bottom: 0.5rem;
+        }
+        
+        textarea {
+            width: 100%;
+            min-height: 320px;
+            padding: 1rem;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-family: inherit;
+            font-size: 0.95rem;
+            resize: vertical;
+            transition: border-color 0.2s;
+        }
+        
+        textarea:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+        
+        button {
+            flex: 1;
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .btn-analyze {
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            color: white;
+        }
+        
+        .btn-analyze:hover {
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+            transform: translateY(-2px);
+        }
+        
+        .btn-analyze:active {
+            transform: translateY(0);
+        }
+        
+        .btn-clear {
+            background: #f3f4f6;
+            color: #4a5568;
+        }
+        
+        .btn-clear:hover {
+            background: #e5e7eb;
+        }
+        
+        .results-section {
+            background: white;
+            border-radius: 12px;
+            padding: 2rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
+            grid-column: 1 / -1;
+            display: none;
+        }
+        
+        .results-section.active {
+            display: block;
+        }
+        
+        .results-header {
+            margin-bottom: 2rem;
+        }
+        
+        .overall-score {
+            display: flex;
+            align-items: center;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+        
+        .score-circle {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            color: white;
+            font-size: 2rem;
+        }
+        
+        .score-circle.excellent {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        }
+        
+        .score-circle.good {
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+        }
+        
+        .score-circle.moderate {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+        }
+        
+        .score-circle.poor {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+        }
+        
+        .score-circle .label {
+            font-size: 0.75rem;
+            font-weight: 500;
+            opacity: 0.9;
+            margin-top: 0.25rem;
+        }
+        
+        .score-info h3 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #1a202c;
+            margin-bottom: 0.5rem;
+        }
+        
+        .score-info p {
+            color: #6b7280;
+            line-height: 1.5;
+        }
+        
+        .results-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .stat-card {
+            background: #f9fafb;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 1.5rem;
+        }
+        
+        .stat-card h4 {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: #6b7280;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 0.75rem;
+        }
+        
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #1a202c;
+        }
+        
+        .stat-subtext {
+            font-size: 0.875rem;
+            color: #9ca3af;
+            margin-top: 0.5rem;
+        }
+        
+        .breakdown-section {
+            margin-top: 2rem;
+        }
+        
+        .breakdown-section h3 {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: #1a202c;
+            margin-bottom: 1rem;
+        }
+        
+        .breakdown-item {
+            background: #f9fafb;
+            border-left: 4px solid #3b82f6;
+            padding: 1rem;
+            margin-bottom: 0.75rem;
+            border-radius: 4px;
+        }
+        
+        .breakdown-item.high {
+            border-left-color: #10b981;
+        }
+        
+        .breakdown-item.medium {
+            border-left-color: #f59e0b;
+        }
+        
+        .breakdown-item.low {
+            border-left-color: #ef4444;
+        }
+        
+        .breakdown-item h4 {
+            font-weight: 600;
+            color: #1a202c;
+            margin-bottom: 0.25rem;
+        }
+        
+        .breakdown-item p {
+            font-size: 0.875rem;
+            color: #6b7280;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 6px;
+            background: #e5e7eb;
+            border-radius: 3px;
+            overflow: hidden;
+            margin-top: 0.5rem;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #3b82f6, #2563eb);
+            transition: width 0.3s ease;
+        }
+        
+        .progress-fill.high {
+            background: linear-gradient(90deg, #10b981, #059669);
+        }
+        
+        .progress-fill.medium {
+            background: linear-gradient(90deg, #f59e0b, #d97706);
+        }
+        
+        .progress-fill.low {
+            background: linear-gradient(90deg, #ef4444, #dc2626);
+        }
+        
+        .recommendations {
+            background: #f0f9ff;
+            border: 1px solid #bfdbfe;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-top: 2rem;
+        }
+        
+        .recommendations h3 {
+            color: #1e40af;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+        
+        .recommendations ul {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .recommendations li {
+            color: #1e40af;
+            margin-bottom: 0.75rem;
+            padding-left: 1.5rem;
+            position: relative;
+        }
+        
+        .recommendations li:before {
+            content: "✓";
+            position: absolute;
+            left: 0;
+            font-weight: bold;
+        }
+        
+        @media (max-width: 1024px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .results-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+        
+        @media (max-width: 640px) {
+            .header h1 {
+                font-size: 1.875rem;
+            }
+            
+            .results-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+    <script type="module">
+        // Resume Analyzer Application
+        
+        class ResumeAnalyzer {
+            constructor() {
+                this.resume = '';
+                this.jobDescription = '';
+                this.results = null;
+                this.init();
+            }
+            
+            init() {
+                this.render();
+            }
+            
+            render() {
+                const root = document.getElementById('root');
+                root.innerHTML = this.getTemplate();
+                this.attachEventListeners();
+            }
+            
+            getTemplate() {
+                return `
+                    <div class="container">
+                        <div class="header">
+                            <h1>Resume Analyzer</h1>
+                            <p>Score your resume against job descriptions instantly</p>
+                        </div>
+                        
+                        <div class="main-grid">
+                            <div class="input-section">
+                                <h2>Job Description</h2>
+                                <label for="jobDesc">Paste the job posting here</label>
+                                <textarea id="jobDesc" placeholder="Copy and paste a complete job description..."></textarea>
+                                <div class="button-group">
+                                    <button class="btn-analyze" onclick="analyzer.analyzeResume()">Analyze</button>
+                                    <button class="btn-clear" onclick="analyzer.clearJobDesc()">Clear</button>
+                                </div>
+                            </div>
+                            
+                            <div class="input-section">
+                                <h2>Your Resume</h2>
+                                <label for="resume">Paste your resume here</label>
+                                <textarea id="resume" placeholder="Copy and paste your complete resume..."></textarea>
+                                <div class="button-group">
+                                    <button class="btn-clear" onclick="analyzer.clearResume()">Clear</button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="results-section" id="resultsSection">
+                            <div class="results-header">
+                                <div class="overall-score">
+                                    <div class="score-circle" id="scoreCircle">
+                                        <span id="scoreValue">0</span>
+                                        <span class="label">%</span>
+                                    </div>
+                                    <div class="score-info">
+                                        <h3 id="scoreMeaning">No Analysis</h3>
+                                        <p id="scoreDescription">Submit your resume and job description to get started.</p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="results-grid">
+                                <div class="stat-card">
+                                    <h4>Skills Match</h4>
+                                    <div class="stat-value" id="skillsMatch">0%</div>
+                                    <div class="stat-subtext" id="skillsCount">0 matched skills</div>
+                                </div>
+                                <div class="stat-card">
+                                    <h4>Keywords Match</h4>
+                                    <div class="stat-value" id="keywordsMatch">0%</div>
+                                    <div class="stat-subtext" id="keywordsCount">0 matched keywords</div>
+                                </div>
+                                <div class="stat-card">
+                                    <h4>Experience Fit</h4>
+                                    <div class="stat-value" id="experienceFit">0%</div>
+                                    <div class="stat-subtext" id="experienceDesc">General alignment</div>
+                                </div>
+                            </div>
+                            
+                            <div class="breakdown-section">
+                                <h3>Matching Skills</h3>
+                                <div id="matchedSkills"></div>
+                            </div>
+                            
+                            <div class="breakdown-section">
+                                <h3>Missing Skills</h3>
+                                <div id="missingSkills"></div>
+                            </div>
+                            
+                            <div class="recommendations">
+                                <h3>Recommendations to Improve Match</h3>
+                                <ul id="recommendationsList"></ul>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            attachEventListeners() {
+                const jobDesc = document.getElementById('jobDesc');
+                const resume = document.getElementById('resume');
+                
+                jobDesc.addEventListener('input', (e) => {
+                    this.jobDescription = e.target.value;
+                });
+                
+                resume.addEventListener('input', (e) => {
+                    this.resume = e.target.value;
+                });
+            }
+            
+            analyzeResume() {
+                if (!this.resume.trim() || !this.jobDescription.trim()) {
+                    alert('Please fill in both resume and job description');
+                    return;
+                }
+                
+                this.results = this.calculateScore();
+                this.displayResults();
+            }
+            
+            calculateScore() {
+                const resumeText = this.resume.toLowerCase();
+                const jobText = this.jobDescription.toLowerCase();
+                
+                // Extract skills, keywords, and experience info
+                const skills = this.extractSkills(jobText);
+                const keywords = this.extractKeywords(jobText);
+                const experienceLevel = this.detectExperienceLevel(jobText);
+                
+                // Calculate matches
+                const matchedSkills = skills.filter(skill => 
+                    resumeText.includes(skill.toLowerCase())
+                );
+                
+                const matchedKeywords = keywords.filter(keyword =>
+                    resumeText.includes(keyword.toLowerCase())
+                );
+                
+                const skillsMatch = Math.round((matchedSkills.length / Math.max(skills.length, 1)) * 100);
+                const keywordsMatch = Math.round((matchedKeywords.length / Math.max(keywords.length, 1)) * 100);
+                const experienceFit = this.calculateExperienceFit(resumeText, experienceLevel);
+                
+                // Calculate overall score
+                const overallScore = Math.round((skillsMatch * 0.4 + keywordsMatch * 0.35 + experienceFit * 0.25));
+                
+                const missingSkills = skills.filter(skill =>
+                    !resumeText.includes(skill.toLowerCase())
+                );
+                
+                return {
+                    overallScore,
+                    skillsMatch,
+                    keywordsMatch,
+                    experienceFit,
+                    matchedSkills,
+                    missingSkills,
+                    matchedKeywords,
+                    totalSkills: skills.length,
+                    totalKeywords: keywords.length,
+                    experienceLevel
+                };
+            }
+            
+            extractSkills(text) {
+                const skillPatterns = [
+                    /(?:skills?:|required skills?:|technical skills?:)([\s\S]*?)(?:experience|education|responsibilities|$)/i,
+                    /(?:proficient in|expertise in|experienced with|skilled in|knowledge of):\s*([^.]+)/gi,
+                    /([a-z#\+\.]+(?:\s+[a-z#\+\.]+)*)/gi
+                ];
+                
+                const commonSkills = [
+                    'python', 'javascript', 'java', 'c++', 'c#', 'ruby', 'php', 'swift', 'kotlin',
+                    'react', 'vue', 'angular', 'node.js', 'express', 'django', 'flask', 'spring',
+                    'sql', 'mongodb', 'postgresql', 'mysql', 'redis', 'cassandra',
+                    'aws', 'azure', 'gcp', 'docker', 'kubernetes', 'ci/cd', 'git',
+                    'html', 'css', 'typescript', 'graphql', 'rest api', 'microservices',
+                    'machine learning', 'data analysis', 'tensorflow', 'pytorch', 'scikit-learn',
+                    'linux', 'unix', 'windows', 'macos', 'devops', 'terraform', 'ansible',
+                    'agile', 'scrum', 'jira', 'confluence', 'communication', 'leadership',
+                    'project management', 'problem solving', 'debugging', 'testing',
+                    'unit testing', 'integration testing', 'jest', 'pytest', 'junit'
+                ];
+                
+                const foundSkills = new Set();
+                
+                commonSkills.forEach(skill => {
+                    if (text.includes(skill.toLowerCase())) {
+                        foundSkills.add(skill);
+                    }
+                });
+                
+                return Array.from(foundSkills);
+            }
+            
+            extractKeywords(text) {
+                const keywords = [
+                    'experience', 'years', 'required', 'must have', 'nice to have',
+                    'bachelor', 'master', 'degree', 'certification', 'certified',
+                    'team', 'collaborate', 'communication', 'problem solving',
+                    'innovation', 'creative', 'analytical', 'detail oriented',
+                    'fast paced', 'deadline', 'agile', 'hybrid', 'remote',
+                    'salary', 'benefits', 'bonus', 'equity', 'healthcare'
+                ];
+                
+                return keywords.filter(keyword =>
+                    text.includes(keyword.toLowerCase())
+                );
+            }
+            
+            detectExperienceLevel(text) {
+                if (text.includes('senior') || text.includes('10+ years') || text.includes('architect')) {
+                    return 'senior';
+                }
+                if (text.includes('mid-level') || text.includes('3-5 years') || text.includes('lead')) {
+                    return 'mid';
+                }
+                if (text.includes('junior') || text.includes('entry') || text.includes('0-2 years')) {
+                    return 'junior';
+                }
+                return 'any';
+            }
+            
+            calculateExperienceFit(resumeText, requiredLevel) {
+                const hasYears = /\b([0-9]{1,2})\+?\s*years?\b/i.test(resumeText);
+                const hasMentorship = resumeText.includes('mentor') || resumeText.includes('lead') || resumeText.includes('manage');
+                const hasProjects = resumeText.includes('project') || resumeText.includes('developed') || resumeText.includes('built');
+                
+                let fit = 40;
+                
+                if (hasYears) fit += 20;
+                if (hasMentorship && (requiredLevel === 'senior' || requiredLevel === 'mid')) fit += 15;
+                if (hasProjects) fit += 25;
+                
+                return Math.min(fit, 100);
+            }
+            
+            displayResults() {
+                const resultsSection = document.getElementById('resultsSection');
+                const r = this.results;
+                
+                // Update overall score
+                document.getElementById('scoreValue').textContent = r.overallScore;
+                const scoreCircle = document.getElementById('scoreCircle');
+                scoreCircle.className = 'score-circle ' + this.getScoreRating(r.overallScore);
+                
+                const meanings = {
+                    'excellent': ['Excellent Match!', 'Your resume aligns very well with this position. You should apply!'],
+                    'good': ['Good Match', 'Your resume demonstrates strong alignment with the job requirements.'],
+                    'moderate': ['Moderate Match', 'Your resume shows some alignment, but you may want to tailor it further.'],
+                    'poor': ['Needs Work', 'Your resume needs significant improvements to match this position.']
+                };
+                
+                const rating = this.getScoreRating(r.overallScore);
+                const [meaning, description] = meanings[rating];
+                document.getElementById('scoreMeaning').textContent = meaning;
+                document.getElementById('scoreDescription').textContent = description;
+                
+                // Update stats
+                document.getElementById('skillsMatch').textContent = r.skillsMatch + '%';
+                document.getElementById('skillsCount').textContent = `${r.matchedSkills.length} of ${r.totalSkills} skills`;
+                
+                document.getElementById('keywordsMatch').textContent = r.keywordsMatch + '%';
+                document.getElementById('keywordsCount').textContent = `${r.matchedKeywords.length} of ${r.totalKeywords} keywords`;
+                
+                document.getElementById('experienceFit').textContent = r.experienceFit + '%';
+                document.getElementById('experienceDesc').textContent = this.getExperienceDescription(r.experienceFit);
+                
+                // Display matched skills
+                const matchedSkillsHtml = r.matchedSkills.map(skill => `
+                    <div class="breakdown-item high">
+                        <h4>✓ ${this.capitalize(skill)}</h4>
+                        <div class="progress-bar">
+                            <div class="progress-fill high" style="width: 100%"></div>
+                        </div>
+                    </div>
+                `).join('') || '<p style="color: #9ca3af; font-size: 0.875rem;">No matched skills found. Try adding more skills to your resume.</p>';
+                
+                document.getElementById('matchedSkills').innerHTML = matchedSkillsHtml;
+                
+                // Display missing skills
+                const missingSkillsHtml = r.missingSkills.slice(0, 8).map(skill => `
+                    <div class="breakdown-item low">
+                        <h4>✗ ${this.capitalize(skill)}</h4>
+                        <p>Consider adding experience or knowledge of this skill</p>
+                        <div class="progress-bar">
+                            <div class="progress-fill low" style="width: 0%"></div>
+                        </div>
+                    </div>
+                `).join('') || '<p style="color: #9ca3af; font-size: 0.875rem;">Your resume covers all the required skills!</p>';
+                
+                document.getElementById('missingSkills').innerHTML = missingSkillsHtml;
+                
+                // Display recommendations
+                const recommendations = this.generateRecommendations(r);
+                const recommendationsHtml = recommendations.map(rec => 
+                    `<li>${rec}</li>`
+                ).join('');
+                
+                document.getElementById('recommendationsList').innerHTML = recommendationsHtml;
+                
+                resultsSection.classList.add('active');
+            }
+            
+            generateRecommendations(results) {
+                const recommendations = [];
+                
+                if (results.overallScore < 50) {
+                    recommendations.push('Significantly improve your skill alignment by adding relevant technologies and tools mentioned in the job description.');
+                }
+                
+                if (results.skillsMatch < 60) {
+                    const topMissing = results.missingSkills.slice(0, 3);
+                    recommendations.push(`Consider learning or highlighting: ${topMissing.map(s => this.capitalize(s)).join(', ')}`);
+                }
+                
+                if (results.experienceFit < 50) {
+                    recommendations.push('Expand your experience section with more project details, achievements, and quantifiable results.');
+                }
+                
+                if (results.keywordsMatch < 60) {
+                    recommendations.push('Use more industry-specific terminology and keywords from the job posting in your resume.');
+                }
+                
+                if (results.overallScore >= 75) {
+                    recommendations.push('Your resume is well-aligned! Focus on customizing your cover letter to highlight your most relevant achievements.');
+                }
+                
+                recommendations.push('Tailor your resume for each position by emphasizing relevant skills and experiences.');
+                
+                return recommendations;
+            }
+            
+            getScoreRating(score) {
+                if (score >= 75) return 'excellent';
+                if (score >= 60) return 'good';
+                if (score >= 40) return 'moderate';
+                return 'poor';
+            }
+            
+            getExperienceDescription(fit) {
+                if (fit >= 75) return 'Excellent alignment';
+                if (fit >= 50) return 'Good alignment';
+                if (fit >= 25) return 'Some alignment';
+                return 'Needs improvement';
+            }
+            
+            capitalize(str) {
+                return str.charAt(0).toUpperCase() + str.slice(1);
+            }
+            
+            clearResume() {
+                document.getElementById('resume').value = '';
+                this.resume = '';
+            }
+            
+            clearJobDesc() {
+                document.getElementById('jobDesc').value = '';
+                this.jobDescription = '';
+            }
+        }
+        
+        // Initialize the app
+        const analyzer = new ResumeAnalyzer();
+        window.analyzer = analyzer;
+    </script>
+</body>
+</html>
